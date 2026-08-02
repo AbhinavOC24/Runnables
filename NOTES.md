@@ -52,7 +52,7 @@ chain = prompt | model | parser
 ## Common Gotchas
 - **Use `ChatPromptTemplate` for instruct/chat models** — `PromptTemplate` produces raw text. Instruct models (like `Qwen2-*-Instruct`) expect structured `[system, user, assistant]` chat messages. Feeding raw text causes the model to hallucinate the full conversation (printing "Human: ... Assistant: ..." in a loop).
 - `PromptTemplate` uses `template=` (not `tempalte=`) — typo causes a silent `None` template
-- **Set `repetition_penalty > 1.0`** (e.g. `1.3`) in `GenerationConfig` to stop small models from looping once they start repeating tokens
+- **`0.5B` models cannot reliably follow instructions** — they hallucinate random training-data patterns (MCQ answers, essays, system design docs) instead of responding to the prompt. `1.5B` is the practical minimum for `Qwen2.5-Instruct` to stay on topic.
 - **Keep `max_new_tokens` low** for small models (≤128) — they don't benefit from more tokens and just start looping
 - `HuggingFacePipeline` needs `return_full_text: False` to avoid echoing the prompt in the output
 

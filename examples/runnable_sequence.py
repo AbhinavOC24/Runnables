@@ -19,10 +19,10 @@ parser = StrOutputParser()
 # Step 2: Explain the joke produced by step 1
 prompt2 = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful assistant. Keep responses short and concise."),
-    ("human", "Briefly explain why this joke is funny:\n\n{joke}"),
+    ("human", "explain why this joke is funny :\n\n{joke}"),
 ])
 
 chain = RunnableSequence(prompt, model, parser, prompt2, model, parser)
 
-result = chain.invoke({"topic": "Leetcode"})
+result = chain.invoke({"topic": "clown"})
 print(result)
