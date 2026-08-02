@@ -1,3 +1,68 @@
-Runnables are of two types
-task specific and
-runnable primitives - they help to other runnables to interact with each other
+# LangChain Runnables — Learning Notes
+
+## What are Runnables?
+Runnables are the core abstraction in LangChain's **LCEL (LangChain Expression Language)**. Any object that implements the `Runnable` interface can be chained with the `|` operator (or explicitly via `RunnableSequence`).
+
+Every Runnable exposes:
+- `.invoke(input)` — single synchronous call
+- `.batch(inputs)` — parallel calls on a list
+- `.stream(input)` — stream output tokens
+
+---
+
+## Types of Runnables
+
+### 1. Task-Specific Runnables
+Built for a specific purpose and implement the Runnable interface:
+| Runnable | Purpose |
+|---|---|
+| `PromptTemplate` | Formats input variables into a prompt string |
+| `ChatPromptTemplate` | Like `PromptTemplate` but for chat message lists |
+| `LLM / ChatModel` | Calls a language model |
+| `StrOutputParser` | Parses LLM output to a plain string |
+| `JsonOutputParser` | Parses LLM output to JSON |
+
+### 2. Runnable Primitives
+General-purpose Runnables that help **compose** other Runnables:
+| Primitive | Purpose |
+|---|---|
+| `RunnableSequence` | Chains Runnables one after another (`A | B | C`) |
+| `RunnableParallel` | Runs multiple Runnables in parallel on the same input |
+| `RunnableLambda` | Wraps any Python function as a Runnable |
+| `RunnablePassthrough` | Passes input unchanged (useful for injecting context) |
+| `RunnableBranch` | Conditional routing based on input |
+
+---
+
+## RunnableSequence
+`RunnableSequence` chains Runnables so the output of each becomes the input of the next.
+
+```python
+from langchain_core.runnables import RunnableSequence
+chain = RunnableSequence(prompt, model, parser)
+result = chain.invoke({"topic": "AI"})
+# Equivalent shorthand using LCEL:
+chain = prompt | model | parser
+```
+
+**Key point:** Each Runnable in the sequence must accept the output type of the previous one.
+
+---
+
+## Common Gotchas
+- `PromptTemplate` uses `template=` (not `tempalte=`) — typo causes a silent `None` template
+- `HuggingFacePipeline` needs `return_full_text: False` to avoid echoing the prompt in the output
+- `GenerationConfig(max_new_tokens=...)` controls response length; keep it reasonable for local models
+
+---
+
+## Setup
+
+```bash
+# Create and activate virtualenv
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
