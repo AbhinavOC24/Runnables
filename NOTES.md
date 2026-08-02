@@ -1,9 +1,11 @@
 # LangChain Runnables — Learning Notes
 
 ## What are Runnables?
+
 Runnables are the core abstraction in LangChain's **LCEL (LangChain Expression Language)**. Any object that implements the `Runnable` interface can be chained with the `|` operator (or explicitly via `RunnableSequence`).
 
 Every Runnable exposes:
+
 - `.invoke(input)` — single synchronous call
 - `.batch(inputs)` — parallel calls on a list
 - `.stream(input)` — stream output tokens
@@ -13,9 +15,11 @@ Every Runnable exposes:
 ## Types of Runnables
 
 ### 1. Task-Specific Runnables
+
 Built for a specific purpose and implement the Runnable interface:
+
 | Runnable | Purpose |
-|---|---|
+| --- | --- |
 | `PromptTemplate` | Formats input variables into a prompt string |
 | `ChatPromptTemplate` | Like `PromptTemplate` but for chat message lists |
 | `LLM / ChatModel` | Calls a language model |
@@ -23,9 +27,11 @@ Built for a specific purpose and implement the Runnable interface:
 | `JsonOutputParser` | Parses LLM output to JSON |
 
 ### 2. Runnable Primitives
+
 General-purpose Runnables that help **compose** other Runnables:
+
 | Primitive | Purpose |
-|---|---|
+| --- | --- |
 | `RunnableSequence` | Chains Runnables one after another (`A | B | C`) |
 | `RunnableParallel` | Runs multiple Runnables in parallel on the same input |
 | `RunnableLambda` | Wraps any Python function as a Runnable |
@@ -35,6 +41,7 @@ General-purpose Runnables that help **compose** other Runnables:
 ---
 
 ## RunnableSequence
+
 `RunnableSequence` chains Runnables so the output of each becomes the input of the next.
 
 ```python
@@ -49,9 +56,55 @@ chain = prompt | model | parser
 
 ---
 
+## `ChatPromptTemplate.from_messages()` vs `PromptTemplate`
+
+### `PromptTemplate`
+Produces a **plain string**. Good for base/completion models that do open-ended text continuation.
+
+```python
+from langchain_core.prompts import PromptTemplate
+
+prompt = PromptTemplate(
+    input_variables=["topic"],
+    template="Write a joke about {topic}"
+)
+prompt.invoke({"topic": "AI"})
+# → StringPromptValue: "Write a joke about AI"
+```
+
+### `ChatPromptTemplate.from_messages()`
+Produces a **list of structured messages** (`[{"role": "system", "content": "..."}, {"role": "user", "content": "..."}]`). Required for instruct/chat-tuned models.
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a witty comedian."),
+    ("human", "Write a short joke about {topic}."),
+])
+prompt.invoke({"topic": "AI"})
+# → ChatPromptValue: [SystemMessage(...), HumanMessage(...)]
+```
+
+### Why `from_messages()` for instruct models?
+
+Instruct models (e.g. `Qwen2.5-*-Instruct`, `Llama-3-Instruct`) are **fine-tuned on chat transcripts**, not raw text. During fine-tuning, every example had explicit role tags (`<|system|>`, `<|user|>`, `<|assistant|>`). At inference time, the tokenizer's `apply_chat_template()` converts the structured messages back into these special tokens.
+
+| | `PromptTemplate` | `ChatPromptTemplate.from_messages()` |
+|---|---|---|
+| Output type | `StringPromptValue` (raw string) | `ChatPromptValue` (list of messages) |
+| Model type | Base / completion models | Instruct / chat-tuned models ✓ |
+| Role semantics | None — model guesses | Explicit system / user / assistant |
+| What the model receives | `"Write a joke about AI"` | `<\|system\|>You are...<\|user\|>Write a joke...` |
+| Risk if wrong format | Model hallucinates conversation | — |
+
+> **Rule of thumb:** If the model name contains `-Instruct`, `-Chat`, or `-it`, always use `ChatPromptTemplate`.
+
+
+
 ## Common Gotchas
+
 - **Use `ChatPromptTemplate` for instruct/chat models** — `PromptTemplate` produces raw text. Instruct models (like `Qwen2-*-Instruct`) expect structured `[system, user, assistant]` chat messages. Feeding raw text causes the model to hallucinate the full conversation (printing "Human: ... Assistant: ..." in a loop).
-- `PromptTemplate` uses `template=` (not `tempalte=`) — typo causes a silent `None` template
 - **`0.5B` models cannot reliably follow instructions** — they hallucinate random training-data patterns (MCQ answers, essays, system design docs) instead of responding to the prompt. `1.5B` is the practical minimum for `Qwen2.5-Instruct` to stay on topic.
 - **Keep `max_new_tokens` low** for small models (≤128) — they don't benefit from more tokens and just start looping
 - `HuggingFacePipeline` needs `return_full_text: False` to avoid echoing the prompt in the output
