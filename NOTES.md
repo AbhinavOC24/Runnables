@@ -123,6 +123,55 @@ result = chain.invoke({"topic": "quantum computing"})
 - `RunnablePassthrough()` alone simply returns its input — useful as a "no-op" branch.
 - `.assign(key=runnable)` keeps every original key and **adds** `key` with the Runnable's output.
 - Common pattern: pair with `RunnableParallel` to send the original input + an LLM result to the next step in a chain.
+---
+
+## RunnableLambda
+
+`RunnableLambda` wraps any Python function into a Runnable, letting you insert custom logic anywhere in a chain.
+
+### In a sequence (post-processing)
+
+```python
+from langchain_core.runnables import RunnableLambda, RunnableSequence
+
+upper_case = RunnableLambda(lambda x: x.upper())
+
+chain = RunnableSequence(prompt, model, parser, upper_case)
+result = chain.invoke({"topic": "AI"})
+# → "🤖 AI ISN'T JUST THE FUTURE — IT'S THE NOW!"
+```
+
+### Named functions (better for readability & debugging)
+
+```python
+def count_words(text: str) -> int:
+    return len(text.split())
+
+def extract_hashtags(text: str) -> list:
+    return [w for w in text.split() if w.startswith("#")]
+
+word_counter = RunnableLambda(count_words)
+hashtag_extractor = RunnableLambda(extract_hashtags)
+```
+
+### Combined with RunnableParallel
+
+```python
+analysis = RunnableParallel(
+    tweet=RunnablePassthrough(),
+    word_count=RunnableLambda(count_words),
+    hashtags=RunnableLambda(extract_hashtags),
+)
+
+chain = RunnableSequence(tweet_chain, analysis)
+result = chain.invoke({"topic": "space"})
+# → {"tweet": "🚀 ...", "word_count": 12, "hashtags": ["#Space"]}
+```
+
+**Key points:**
+- Any callable `f(input) -> output` can be wrapped — lambdas, regular functions, even class methods.
+- The function's **return type becomes the next step's input type**, so make sure types match.
+- Named functions are preferred over lambdas for clarity in error tracebacks and LangSmith traces.
 
 ---
 
