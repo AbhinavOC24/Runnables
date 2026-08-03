@@ -22,7 +22,8 @@ Runnables/
 │   ├── runnable_sequence.py
 │   ├── runnable_parallel.py
 │   ├── runnable_passthrough.py
-│   └── runnable_lambda.py
+│   ├── runnable_lambda.py
+│   └── runnable_branch.py
 ├── utils/
 │   └── model_setup.py      # Shared model loader (HuggingFacePipeline → ChatHuggingFace)
 ├── NOTES.md                # Concept notes and key learnings
@@ -63,6 +64,7 @@ python3 -m examples.runnable_sequence
 | [`examples/runnable_parallel.py`](examples/runnable_parallel.py) | Running multiple chains simultaneously using `RunnableParallel` |
 | [`examples/runnable_passthrough.py`](examples/runnable_passthrough.py) | Forwarding input unchanged with `RunnablePassthrough` and `.assign()` |
 | [`examples/runnable_lambda.py`](examples/runnable_lambda.py) | Wrapping custom Python functions as Runnables with `RunnableLambda` |
+| [`examples/runnable_branch.py`](examples/runnable_branch.py) | Conditional routing (if/else) with `RunnableBranch` |
 
 ---
 

@@ -175,6 +175,44 @@ result = chain.invoke({"topic": "space"})
 
 ---
 
+## RunnableBranch
+
+`RunnableBranch` is the **if/else of Runnables**. It evaluates a list of `(condition, runnable)` pairs in order and runs the first one whose condition returns `True`. If none match, it runs a default runnable.
+
+```python
+from langchain_core.runnables import RunnableBranch, RunnableLambda
+
+def is_science(input: dict) -> bool:
+    return "atom" in input["question"].lower()
+
+def is_history(input: dict) -> bool:
+    return "war" in input["question"].lower()
+
+branch = RunnableBranch(
+    (RunnableLambda(is_science), science_chain),   # if is_science → science_chain
+    (RunnableLambda(is_history), history_chain),    # elif is_history → history_chain
+    general_chain,                                  # else → general_chain (default)
+)
+
+result = branch.invoke({"question": "Why do atoms bond?"})
+# → routes to science_chain
+```
+
+**Think of it as:**
+```python
+if is_science(input):    return science_chain.invoke(input)
+elif is_history(input):  return history_chain.invoke(input)
+else:                    return general_chain.invoke(input)
+```
+
+**Key points:**
+- Conditions are checked **in order** — the first `True` wins.
+- The **last argument** (no condition) is the default / `else` branch.
+- Conditions must be Runnables — wrap plain functions with `RunnableLambda`.
+- Each branch receives the **same original input**.
+
+---
+
 ### `PromptTemplate`
 Produces a **plain string**. Good for base/completion models that do open-ended text continuation.
 
