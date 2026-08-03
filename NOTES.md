@@ -56,6 +56,36 @@ chain = prompt | model | parser
 
 ---
 
+## RunnableParallel
+
+`RunnableParallel` runs multiple Runnables **simultaneously** on the **same input** and returns a dict of their results.
+
+```python
+from langchain_core.runnables import RunnableParallel, RunnableSequence
+
+joke_chain  = RunnableSequence(joke_prompt, model, parser)
+fact_chain   = RunnableSequence(fact_prompt, model, parser)
+
+# Method 1: Keyword arguments
+parallel = RunnableParallel(joke=joke_chain, fact=fact_chain)
+
+# Method 2: Dict-based syntax (equivalent)
+parallel = RunnableParallel({
+    "joke": joke_chain,
+    "fact": fact_chain,
+})
+
+result = parallel.invoke({"topic": "cats"})
+# → {"joke": "Why did the cat sit on the computer? ...", "fact": "Cats sleep 12-16 hours ..."}
+```
+
+**Key points:**
+- Every branch receives the **same input** (not the output of another branch).
+- The result is always a **dict** keyed by the names you assigned.
+- Branches run in **concurrent threads**, so total latency ≈ the slowest branch (not the sum).
+
+---
+
 ## `ChatPromptTemplate.from_messages()` vs `PromptTemplate`
 
 ### `PromptTemplate`

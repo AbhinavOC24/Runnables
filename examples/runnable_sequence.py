@@ -5,7 +5,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableSequence
 from langchain_core.prompts import ChatPromptTemplate   # ← chat format, not raw text
 from utils.model_setup import get_model
-
+from dotenv import load_dotenv
+load_dotenv()
 model = get_model()
 
 # Step 1: Generate a joke about the given topic

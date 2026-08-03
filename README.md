@@ -19,7 +19,8 @@ The goal is to build intuition for how LangChain's composable pipeline primitive
 ```
 Runnables/
 ├── examples/               # Runnable example scripts (one concept per file)
-│   └── runnable_sequence.py
+│   ├── runnable_sequence.py
+│   └── runnable_parallel.py
 ├── utils/
 │   └── model_setup.py      # Shared model loader (HuggingFacePipeline → ChatHuggingFace)
 ├── NOTES.md                # Concept notes and key learnings
@@ -57,6 +58,7 @@ python3 -m examples.runnable_sequence
 | File | Concept Demonstrated |
 |---|---|
 | [`examples/runnable_sequence.py`](examples/runnable_sequence.py) | Chaining prompts + model + parser using `RunnableSequence` |
+| [`examples/runnable_parallel.py`](examples/runnable_parallel.py) | Running multiple chains simultaneously using `RunnableParallel` |
 
 ---
 
