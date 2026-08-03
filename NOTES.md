@@ -86,7 +86,45 @@ result = parallel.invoke({"topic": "cats"})
 
 ---
 
-## `ChatPromptTemplate.from_messages()` vs `PromptTemplate`
+## RunnablePassthrough
+
+`RunnablePassthrough` forwards its input unchanged. It's most useful inside `RunnableParallel` to preserve the original input alongside transformed outputs.
+
+### Basic usage inside RunnableParallel
+
+```python
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableSequence
+
+tweet_chain = RunnableSequence(tweet_prompt, model, parser)
+
+chain = RunnableParallel(
+    original_input=RunnablePassthrough(),   # forwards {"topic": "AI"} as-is
+    tweet=tweet_chain,                      # generates a tweet from the topic
+)
+
+result = chain.invoke({"topic": "AI"})
+# → {"original_input": {"topic": "AI"}, "tweet": "🤖 AI is transforming ..."}
+```
+
+### `RunnablePassthrough.assign()`
+
+`.assign()` is a shortcut that passes **all existing keys through** and adds new computed keys on top — no need to manually forward each key with `RunnablePassthrough()`.
+
+```python
+summary_chain = RunnableSequence(summary_prompt, model, parser)
+
+chain = RunnablePassthrough.assign(summary=summary_chain)
+
+result = chain.invoke({"topic": "quantum computing"})
+# → {"topic": "quantum computing", "summary": "Quantum computing uses ..."}
+```
+
+**Key points:**
+- `RunnablePassthrough()` alone simply returns its input — useful as a "no-op" branch.
+- `.assign(key=runnable)` keeps every original key and **adds** `key` with the Runnable's output.
+- Common pattern: pair with `RunnableParallel` to send the original input + an LLM result to the next step in a chain.
+
+---
 
 ### `PromptTemplate`
 Produces a **plain string**. Good for base/completion models that do open-ended text continuation.
